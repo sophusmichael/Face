@@ -20,8 +20,6 @@ using namespace std;
 
 int main(){
 	int count = 0; //variable for timer
-
-	int testcom = 1;
 	VideoCapture cap0(0);
 
 
@@ -112,6 +110,18 @@ int main(){
 			Point center(faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5);
 			ellipse(img, center, Size(faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
 		}
+
+
+		// add support to recognize eye detection to reduce false positives 
+		// haaarcascade_mcs_lefteye.xml and haaarcascade_mcs_lefteye.xml have 80% reliability with open/closed eyes
+		// cost is approximately 18ms
+
+
+
+
+
+
+
 
 		imshow("gray", img);
 
