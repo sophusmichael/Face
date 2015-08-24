@@ -21,7 +21,7 @@ using namespace std;
 int main(){
 	int count = 0; //variable for timer
 
-
+	int testcom = 1;
 	VideoCapture cap0(0);
 
 
