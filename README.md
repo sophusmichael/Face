@@ -6,3 +6,8 @@ https://sourceforge.net/projects/opencvlibrary/files/opencv-win/2.4.11/opencv-2.
 
 Visual Studio 2013 and Windows 7, x86 version of OpenCV vc12
 https://marcomuraresearch.wordpress.com/2015/04/16/install-opencv-visual-studio/
+
+This code takes a USB video stream and samples 1 in 30 frames, then performs face detection via LBPcascade_frontalface
+
+
+It will draw an ellipse around the detected center point of the face 
