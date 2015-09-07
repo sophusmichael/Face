@@ -17,7 +17,6 @@ using namespace std;
 
 
 
-
 int main(){
 	int count = 0; //variable for timer
 	VideoCapture cap0(0);
@@ -28,6 +27,7 @@ int main(){
 		Mat frame0;    
 		Mat img;
 		Mat gray;
+
 		cap0.read(frame0);
 		if (cv::waitKey(30) >= 0) break;
 		// stereo processing here
@@ -37,9 +37,11 @@ int main(){
 		cap0 >> img;
 
 		CascadeClassifier faceDetector;
+		CascadeClassifier eyeDetector1;
+		CascadeClassifier eyeDetector2;
+
 		try {
 			faceDetector.load("C:\\opencv\\sources\\data\\lbpcascades\\lbpcascade_frontalface.xml");
-
 		}
 		catch (cv::Exception e){}
 		if (faceDetector.empty()) {
@@ -112,6 +114,7 @@ int main(){
 		}
 
 
+
 		// add support to recognize eye detection to reduce false positives 
 		// haaarcascade_mcs_lefteye.xml and haaarcascade_mcs_lefteye.xml have 80% reliability with open/closed eyes
 		// cost is approximately 18ms
@@ -119,11 +122,29 @@ int main(){
 
 
 
-
-
-
-
 		imshow("gray", img);
+
+		//replace with your own filepath
+
+
+
+		stringstream ss;
+		int updatedCount = count / 30;
+		ss << updatedCount;
+		string str = ss.str();
+
+		//we can just adjust the subject name to save a new set of training images
+		string subjectName = "first\\michael";
+
+		string saveLoc = "C:\\Users\\michael\\Documents\\FacePhotos\\";
+
+
+		string saveName = str + ".jpg";
+		string testSave = saveLoc + subjectName + saveName;
+
+		printf("%s\n", testSave.c_str());
+
+		imwrite(testSave, img);
 
 		}
 		count++;
