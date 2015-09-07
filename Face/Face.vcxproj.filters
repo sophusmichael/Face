@@ -48,5 +48,8 @@
     <Xml Include="..\..\..\..\..\..\Downloads\webcam-pulse-detector-master\haarcascade_mcs_righteye.xml">
       <Filter>Source Files</Filter>
     </Xml>
+    <Xml Include="..\..\..\..\..\..\opencv\sources\data\haarcascades\haarcascade_eye_tree_eyeglasses.xml">
+      <Filter>Source Files</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

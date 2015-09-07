@@ -110,6 +110,7 @@
     <Xml Include="..\..\..\..\..\..\..\opencv\sources\data\lbpcascades\lbpcascade_frontalface.xml" />
     <Xml Include="..\..\..\..\..\..\Downloads\webcam-pulse-detector-master\haarcascade_mcs_lefteye.xml" />
     <Xml Include="..\..\..\..\..\..\Downloads\webcam-pulse-detector-master\haarcascade_mcs_righteye.xml" />
+    <Xml Include="..\..\..\..\..\..\opencv\sources\data\haarcascades\haarcascade_eye_tree_eyeglasses.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

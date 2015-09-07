@@ -27,6 +27,7 @@ int main(){
 		Mat frame0;    
 		Mat img;
 		Mat gray;
+		Mat frame_gray;
 
 		cap0.read(frame0);
 		if (cv::waitKey(30) >= 0) break;
@@ -37,15 +38,16 @@ int main(){
 		cap0 >> img;
 
 		CascadeClassifier faceDetector;
-		CascadeClassifier eyeDetector1;
-		CascadeClassifier eyeDetector2;
+		CascadeClassifier eyeDetector;
+
 
 		try {
 			faceDetector.load("C:\\opencv\\sources\\data\\lbpcascades\\lbpcascade_frontalface.xml");
+			eyeDetector.load("C:\\opencv\\sources\\data\\haarcascades\\haarcascade_eye_tree_eyeglasses.xml");
 		}
 		catch (cv::Exception e){}
-		if (faceDetector.empty()) {
-			cerr << "Error: Couldn't load Face Detector (";
+		if (faceDetector.empty() || eyeDetector.empty()) {
+			cerr << "Error: Couldn't load Face/Eye Detector (";
 			cerr << "lbpcascade_frontalface.xml" << ")!" << endl;
 			exit(1);
 		}
@@ -105,10 +107,19 @@ int main(){
 				faces[i].x = img.cols - faces[i].width;
 			if (faces[i].y + faces[i].height > img.rows)
 				faces[i].y = img.rows - faces[i].height;
+
+
+			Mat faceROI = gray(faces[i]);
+			std::vector<Rect> eyes;
+			eyeDetector.detectMultiScale(faceROI, eyes, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, Size(30, 30));
+
 		}
+
 
 		for (size_t i = 0; i < faces.size(); i++)
 		{
+
+
 			Point center(faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5);
 			ellipse(img, center, Size(faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
 		}
@@ -124,27 +135,21 @@ int main(){
 
 		imshow("gray", img);
 
-		//replace with your own filepath
-
-
-
 		stringstream ss;
+		//since we are sampling only every 30 frames we divide by 30 for the count
 		int updatedCount = count / 30;
 		ss << updatedCount;
 		string str = ss.str();
-
-		//we can just adjust the subject name to save a new set of training images
+		//we can adjust the subject name to save a new set of training images
 		string subjectName = "first\\michael";
-
+		//we can adjust the saveLoc to a new filepath on a different system
 		string saveLoc = "C:\\Users\\michael\\Documents\\FacePhotos\\";
-
-
 		string saveName = str + ".jpg";
 		string testSave = saveLoc + subjectName + saveName;
-
 		printf("%s\n", testSave.c_str());
-
-		imwrite(testSave, img);
+		if (updatedCount < 10){
+			imwrite(testSave, img);
+		}
 
 		}
 		count++;
