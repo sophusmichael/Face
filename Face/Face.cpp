@@ -8,6 +8,8 @@
 #include <time.h>
 // Include OpenCV's C++ Interface
 #include "opencv2/opencv.hpp"
+#include <fstream>
+#include <sstream>
 
 // Include the rest of our code!
 
@@ -15,11 +17,95 @@
 using namespace cv;
 using namespace std;
 
+static Mat processImage(Mat& image)
+{
+	cv::Mat resized;
+	cv::Size originalSize = image.size();
+
+	cv::Size goalSize = cv::Size(140, 200);
+	bool keepAspectRatio = true;
+
+	if (keepAspectRatio)
+	{
+		float ratio = static_cast<float>(goalSize.height) / originalSize.height;
+		cv::Size newSize((int)(originalSize.width * ratio), (int)(originalSize.height * ratio));
+
+		//fix possible rounding error by float
+		if (newSize.height != goalSize.height) newSize.height = goalSize.height;
+
+		cv::resize(image, resized, newSize);
+
+		if (resized.size().width != goalSize.width)
+		{
+			if (keepAspectRatio)
+			{
+				int delta = goalSize.width - resized.size().width;
+
+				if (delta < 0)
+				{
+					cv::Rect clipRect(std::abs(delta) / 2, 0, goalSize.width, resized.size().height);
+					resized = resized(clipRect);
+				}
+				else if (delta > 0)
+				{
+					//width needs to be widened, create bigger mat, get region of 
+					//interest at the center that matches the size of the resized   
+					//image, and copy the resized image into that ROI
+
+					cv::Mat widened(goalSize, resized.type());
+					cv::Rect widenRect(delta / 2, 0, goalSize.width, goalSize.height);
+					cv::Mat widenedCenter = widened(widenRect);
+					resized.copyTo(widenedCenter);
+					resized = widened; //we return resized, so set widened to resized
+				}
+			}
+		}
+	}
+	else
+		cv::resize(image, resized, goalSize);
+
+	cv::Mat grayFrame;
+	cv::cvtColor(resized, grayFrame, CV_BGR2GRAY);
+
+	return grayFrame;
+}
+static void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';') {
+	std::ifstream file(filename.c_str(), ifstream::in);
+	if (!file) {
+		string error_message = "No valid input file was given, please check the given filename.";
+		CV_Error(CV_StsBadArg, error_message);
+	}
+	string line, path, classlabel;
+	while (getline(file, line)) {
+		stringstream liness(line);
+		getline(liness, path, separator);
+		getline(liness, classlabel);
+		if (!path.empty() && !classlabel.empty()) {
+			images.push_back(imread(path, 0));
+			labels.push_back(atoi(classlabel.c_str()));
+		}
+	}
+}
 
 
-int main(){
+int main(int argc, const char *argv[]) {
 	int count = 0; //variable for timer
 	VideoCapture cap0(0);
+
+	if (argc < 2) {
+		cout << "usage: " << argv[0] << " <csv.ext> <output_folder> " << endl;
+		exit(1);
+	}
+	string output_folder = ".";
+	if (argc == 3) {
+		output_folder = string(argv[2]);
+	}
+	//for training fisherfaces
+	vector<Mat> images;
+	vector<int> labels;
+
+
+
 
 
 	// later: 
@@ -157,7 +243,11 @@ int main(){
 
 
 
-
+	//Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
+	//model->train(images, labels);
+	// The following line predicts the label of a given
+	// test image:
+//	int predictedLabel = model->predict(testSample);
 
 
 
