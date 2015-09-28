@@ -151,6 +151,14 @@ int main(int argc, const char *argv[]) {
 			{
 				Point center(faces[i].x + faces[i].width*0.5, faces[i].y + faces[i].height*0.5);
 				ellipse(img, center, Size(faces[i].width*0.5, faces[i].height*0.5), 0, 0, 360, Scalar(255, 0, 255), 4, 8, 0);
+
+				Rect face_i = faces[i];
+				// Crop the face from the image. So simple with OpenCV C++:
+				Mat face = gray(face_i);
+				Mat face_resized;
+				cv::resize(face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC);
+				// Now perform the prediction, see how easy that is:
+				int prediction = model->predict(face_resized);
 			}
 
 			imshow("gray", img);
