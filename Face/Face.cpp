@@ -69,6 +69,9 @@ static Mat processImage(Mat& image)
 
 	return grayFrame;
 }
+
+
+
 static void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';') {
 	std::ifstream file(filename.c_str(), ifstream::in);
 	if (!file) {
