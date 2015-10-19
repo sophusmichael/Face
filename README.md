@@ -10,10 +10,13 @@ https://marcomuraresearch.wordpress.com/2015/04/16/install-opencv-visual-studio/
 This code takes a USB video stream and samples 1 in 30 frames, then performs face detection via LBPcascade_frontalface
 
 
-It will draw an ellipse around the detected center point of the face 
+You need to run the python script and update the path within the code to where your csv file is
+You will also need to update where your haar frontal face file is 
 
 Use this and the AT&T database to create your csv file
 http://docs.opencv.org/modules/contrib/doc/facerec/tutorial/facerec_video_recognition.html#creating-the-csv-file
 
 //the command to generate the CSV for the training database of images
 C:\Python27> python create_csv.py c:/users/michael/documents/att > csvfile.csv
+
+
