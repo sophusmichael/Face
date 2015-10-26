@@ -9,8 +9,10 @@ https://marcomuraresearch.wordpress.com/2015/04/16/install-opencv-visual-studio/
 
 You need to run the python script in the att folder and update the path within the code to where your csv file is
 You need to update in Face.cpp:
-string fn_haar = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_default.xml";
-string fn_csv = "C:\\Users\\michael\\Documents\\att\\csvfile.csv";
+string fn_haar = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_default.xml"; //update to your frontal face path
+string fn_csv = "C:\\Users\\michael\\Documents\\att\\csvfile.csv"; //update to your csv file path
+String subject_name = "michael"; //update this to the name of the subject
+string directory = "C:\\Users\\michael\\Documents\\att\\"; //update this to where your ATT file path
 
 in Face.cpp need to update:
 Ptr<FaceRecognizer> model = createFisherFaceRecognizer(0,1000); //change 1000 to another constant to change the threshold 
