@@ -96,8 +96,10 @@ int main(int argc, const char *argv[]) {
 	// Get a handle to the Video device:
 
 	int j = 0;
+
 			Mat frame;
 			for (;;) {
+
 				cap0 >> frame;
 				// Clone the current frame:
 				Mat original = frame.clone();
