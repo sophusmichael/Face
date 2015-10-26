@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <time.h>
+#include <Windows.h>
 // Include OpenCV's C++ Interface
 #include "opencv2/opencv.hpp"
 
@@ -16,6 +17,18 @@
 using namespace cv;
 using namespace std;
 
+//this function is to convert strings so that it may be used to create a directory
+std::wstring s2ws(const std::string& s)
+{
+	int len;
+	int slength = (int)s.length() + 1;
+	len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
+	wchar_t* buf = new wchar_t[len];
+	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf, len);
+	std::wstring r(buf);
+	delete[] buf;
+	return r;
+}
 static void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';') {
 	std::ifstream file(filename.c_str(), ifstream::in);
 	if (!file) {
@@ -58,14 +71,16 @@ int main(int argc, const char *argv[]) {
 	int im_width = images[0].cols;
 	int im_height = images[0].rows;
 	// Create a FaceRecognizer and train it on the given images:
-	Ptr<FaceRecognizer> model = createFisherFaceRecognizer();
+	Ptr<FaceRecognizer> model = createFisherFaceRecognizer(0,1000);
 	model->train(images, labels);
+
+	//model->load("C:\\Users\\michael\\Documents\\att\\fisherfaces_at.yml");
 
 	CascadeClassifier haar_cascade;
 	haar_cascade.load(fn_haar);
 	// Get a handle to the Video device:
 
-
+	int j = 0;
 			Mat frame;
 			for (;;) {
 				cap0 >> frame;
@@ -77,6 +92,7 @@ int main(int argc, const char *argv[]) {
 				// Find the faces in the frame:
 				vector< Rect_<int> > faces;
 				haar_cascade.detectMultiScale(gray, faces);
+				
 				for (int i = 0; i < faces.size(); i++) {
 					// Process face by face:
 					Rect face_i = faces[i];
@@ -86,6 +102,47 @@ int main(int argc, const char *argv[]) {
 					cv::resize(face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC);
 					// Now perform the prediction, see how easy that is:
 					int prediction = model->predict(face_resized);
+
+
+					//here we will check to see if there is no good prediction than the face is unknown
+
+					if (j < 20 && prediction == -1){
+							//take 10 photos? what if there is an error with training on the person speaking?
+							stringstream ss;
+							ss << j+1;
+							string index = ss.str();
+							String subject_name = "joey\\";
+							string image = "image";
+							string jpg = ".jpg";
+							string directory = "C:\\Users\\michael\\Documents\\att\\";
+							string newdir = directory + subject_name;
+
+							std::wstring stemp = s2ws(newdir);
+							LPCWSTR dirname = stemp.c_str();
+							CreateDirectory(dirname, NULL);
+							string savepath = directory + subject_name + image + index + jpg;
+
+							imwrite(savepath, face_resized);
+							cout << j;
+							j++;
+
+							images.push_back(face_resized);
+							labels.push_back(40);
+
+							if (j == 19){
+								cout << "retraining";
+								model->train(images, labels);
+							}
+					//		vector<Mat> newImages;
+						//	vector<int> newLabels;
+
+							//model->update(newImages, newLabels);
+					}
+
+
+
+
+
 					// And finally write all we've found out to the original image!
 					// First of all draw a green rectangle around the detected face:
 					rectangle(original, face_i, CV_RGB(0, 255, 0), 1);
@@ -97,7 +154,12 @@ int main(int argc, const char *argv[]) {
 					int pos_y = std::max(face_i.tl().y - 10, 0);
 					// And now put it into the image:
 					putText(original, box_text, Point(pos_x, pos_y), FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 255, 0), 2.0);
+					
+
 				}
+
+
+
 				// Show the result:
 				imshow("face_recognizer", original);
 				// And display it:
