@@ -11,9 +11,13 @@ You need to run the python script in the att folder and update the path within t
 You need to update in Face.cpp:
 
 string fn_haar = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_default.xml";
+
 string fn_csv = "C:\\Users\\michael\\Documents\\att\\csvfile.csv";
+
 String subject_name = "michael";
+
 string directory = "C:\\Users\\michael\\Documents\\att\\";
+
 Ptr<FaceRecognizer> model = createFisherFaceRecognizer(0,1000); //change 1000 to another constant to change the threshold 
 
 Currently the code has 40 people with 10 images each from the AT&T DB as a base database
