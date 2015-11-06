@@ -27,9 +27,12 @@ C:\Python27> python create_csv.py c:/users/michael/documents/att > csvfile.csv
 
 The program doesn't return anything currently but can be set to return the point which is the detected center of the frame
 
-Next steps are to add aditional checks for false positive face detections
+Added prediction confidence to give intuition about what the threshold should be set to
+
 
 //next steps are to increase detection performance for non-frontal faces
 
 
 //add a condition to only output detected faces after retraining happens
+
+

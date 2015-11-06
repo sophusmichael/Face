@@ -142,18 +142,31 @@ static void read_csv(const string& filename, vector<Mat>& images, vector<int>& l
 
 int main(int argc, const char *argv[]) {
 	int count = 0; //variable for timer
+	// Create a FaceRecognizer and train it on the given images:
+	Ptr<FaceRecognizer> model = createFisherFaceRecognizer(0, 1000);
 
 	VideoCapture cap0(0);
 	string fn_haar = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_default.xml";
 	string fn_left = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_lefteye.xml";
 	string fn_right = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_righteye.xml";
 	string fn_csv = "C:\\Users\\michael\\Documents\\att\\csvfile.csv";
-
+	Point CenterPoint;
 
 	vector<Mat> images;
 	vector<int> labels;
 	vector<string> names;
 	std::map<int, std::string> integer_to_name;
+
+	if (argv[1] != NULL){
+		try {
+			model->load("C:\\Users\\michael\\Documents\\att\\saved.xml");
+		}
+		catch (cv::Exception& e) {
+			cerr << "Error opening file \"" << fn_csv << "\". Reason: " << e.msg << endl;
+			exit(1);
+		}
+	}
+
 	try {
 		read_csv(fn_csv, images, labels, names);
 	}
@@ -171,9 +184,11 @@ int main(int argc, const char *argv[]) {
 
 	int im_width = images[0].cols;
 	int im_height = images[0].rows;
-	// Create a FaceRecognizer and train it on the given images:
-	Ptr<FaceRecognizer> model = createFisherFaceRecognizer(0,1000);
-	model->train(images, labels);
+
+
+	if (argv[1] == NULL){
+		model->train(images, labels);
+	}
 	//index for next face
 	int new_index = labels.back() + 1;
 	//model->load("C:\\Users\\michael\\Documents\\att\\fisherfaces_at.yml");
@@ -258,7 +273,13 @@ int main(int argc, const char *argv[]) {
 
 					//only gives prediction if there is an eye detection too!
 					
-					int prediction = model->predict(face_resized);
+					//int prediction = model->predict(face_resized);
+					int prediction = -1;
+					double predicted_confidence = 0.0;
+					// Get the prediction and associated confidence from the model
+					model->predict(face_resized, prediction, predicted_confidence);
+					cout << "prediction is" << prediction << "\n";
+					cout << "predicted confidence is" << predicted_confidence << "\n";
 
 					//here we will check to see if there is no good prediction than the face is unknown
 					//also check to make sure we detected an eye!
@@ -289,6 +310,7 @@ int main(int argc, const char *argv[]) {
 							if (j == 19){
 								cout << "retraining \n";
 								model->train(images, labels);
+								model->save("C:\\Users\\michael\\Documents\\att\\saved.xml");
 								//we must update the map as well
 								for (int i = 0; i < labels.size(); i++){
 									int current_label = labels[i];
@@ -320,7 +342,7 @@ int main(int argc, const char *argv[]) {
 					int pos_x = std::max(face_i.tl().x - 10, 0);
 					int pos_y = std::max(face_i.tl().y - 10, 0);
 					// And now put it into the image:
-
+					CenterPoint = Point(pos_x, pos_y);
 					putText(original, box_text, Point(pos_x, pos_y), FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 255, 0), 2.0);
 
 
@@ -337,5 +359,5 @@ int main(int argc, const char *argv[]) {
 					break;
 			}
 
-	return 0;
+			return 0;
 }

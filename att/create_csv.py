@@ -37,5 +37,5 @@ if __name__ == "__main__":
             subject_path = os.path.join(dirname, subdirname)
             for filename in os.listdir(subject_path):
                 abs_path = "%s/%s" % (subject_path, filename)
-                print "%s%s%d" % (abs_path, SEPARATOR, label)
+                print "%s%s%d%s%s" % (abs_path, SEPARATOR, label, SEPARATOR, subdirname)
             label = label + 1
