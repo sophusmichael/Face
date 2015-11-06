@@ -17,6 +17,91 @@
 using namespace cv;
 using namespace std;
 
+
+void detectObjectsCustom(const Mat &img, CascadeClassifier &cascade, vector<Rect> &objects, int scaledWidth, int flags, Size minFeatureSize, float searchScaleFactor, int minNeighbors)
+{
+	// If the input image is not grayscale, then convert the BGR or BGRA color image to grayscale.
+	Mat gray;
+	if (img.channels() == 3) {
+		cvtColor(img, gray, CV_BGR2GRAY);
+	}
+	else if (img.channels() == 4) {
+		cvtColor(img, gray, CV_BGRA2GRAY);
+	}
+	else {
+		// Access the input image directly, since it is already grayscale.
+		gray = img;
+	}
+
+	// Possibly shrink the image, to run much faster.
+	Mat inputImg;
+	float scale = img.cols / (float)scaledWidth;
+	if (img.cols > scaledWidth) {
+		// Shrink the image while keeping the same aspect ratio.
+		int scaledHeight = cvRound(img.rows / scale);
+		resize(gray, inputImg, Size(scaledWidth, scaledHeight));
+	}
+	else {
+		// Access the input image directly, since it is already small.
+		inputImg = gray;
+	}
+
+	// Standardize the brightness and contrast to improve dark images.
+	Mat equalizedImg;
+	equalizeHist(inputImg, equalizedImg);
+
+	// Detect objects in the small grayscale image.
+	cascade.detectMultiScale(equalizedImg, objects, searchScaleFactor, minNeighbors, flags, minFeatureSize);
+
+	// Enlarge the results if the image was temporarily shrunk before detection.
+	if (img.cols > scaledWidth) {
+		for (int i = 0; i < (int)objects.size(); i++) {
+			objects[i].x = cvRound(objects[i].x * scale);
+			objects[i].y = cvRound(objects[i].y * scale);
+			objects[i].width = cvRound(objects[i].width * scale);
+			objects[i].height = cvRound(objects[i].height * scale);
+		}
+	}
+
+	// Make sure the object is completely within the image, in case it was on a border.
+	for (int i = 0; i < (int)objects.size(); i++) {
+		if (objects[i].x < 0)
+			objects[i].x = 0;
+		if (objects[i].y < 0)
+			objects[i].y = 0;
+		if (objects[i].x + objects[i].width > img.cols)
+			objects[i].x = img.cols - objects[i].width;
+		if (objects[i].y + objects[i].height > img.rows)
+			objects[i].y = img.rows - objects[i].height;
+	}
+
+	// Return with the detected face rectangles stored in "objects".
+}
+
+void detectLargestObject(const Mat &img, CascadeClassifier &cascade, Rect &largestObject, int scaledWidth)
+{
+	// Only search for just 1 object (the biggest in the image).
+	int flags = CASCADE_FIND_BIGGEST_OBJECT;// | CASCADE_DO_ROUGH_SEARCH;
+	// Smallest object size.
+	Size minFeatureSize = Size(20, 20);
+	// How detailed should the search be. Must be larger than 1.0.
+	float searchScaleFactor = 1.1f;
+	// How much the detections should be filtered out. This should depend on how bad false detections are to your system.
+	// minNeighbors=2 means lots of good+bad detections, and minNeighbors=6 means only good detections are given but some are missed.
+	int minNeighbors = 4;
+
+	// Perform Object or Face Detection, looking for just 1 object (the biggest in the image).
+	vector<Rect> objects;
+	detectObjectsCustom(img, cascade, objects, scaledWidth, flags, minFeatureSize, searchScaleFactor, minNeighbors);
+	if (objects.size() > 0) {
+		// Return the only detected object.
+		largestObject = (Rect)objects.at(0);
+	}
+	else {
+		// Return an invalid rect.
+		largestObject = Rect(-1, -1, -1, -1);
+	}
+}
 //this function is to convert strings so that it may be used to create a directory
 std::wstring s2ws(const std::string& s)
 {
@@ -60,6 +145,8 @@ int main(int argc, const char *argv[]) {
 
 	VideoCapture cap0(0);
 	string fn_haar = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_frontalface_default.xml";
+	string fn_left = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_lefteye.xml";
+	string fn_right = "C:\\opencv\\sources\\data\\haarcascades\\haarcascade_mcs_righteye.xml";
 	string fn_csv = "C:\\Users\\michael\\Documents\\att\\csvfile.csv";
 
 
@@ -92,7 +179,11 @@ int main(int argc, const char *argv[]) {
 	//model->load("C:\\Users\\michael\\Documents\\att\\fisherfaces_at.yml");
 
 	CascadeClassifier haar_cascade;
+	CascadeClassifier eyes_cascade_left;
+	CascadeClassifier eyes_cascade_right;
 	haar_cascade.load(fn_haar);
+	eyes_cascade_left.load(fn_left);
+	eyes_cascade_right.load(fn_right);
 	// Get a handle to the Video device:
 
 	int j = 0;
@@ -109,21 +200,69 @@ int main(int argc, const char *argv[]) {
 				// Find the faces in the frame:
 				vector< Rect_<int> > faces;
 				haar_cascade.detectMultiScale(gray, faces);
-				
+
+
 				for (int i = 0; i < faces.size(); i++) {
 					// Process face by face:
 					Rect face_i = faces[i];
 					// Crop the face from the image. So simple with OpenCV C++:
 					Mat face = gray(face_i);
 					Mat face_resized;
+
+
+					const float EYE_SX = 0.16f;
+					const float EYE_SY = 0.26f;
+					const float EYE_SW = 0.30f;
+					const float EYE_SH = 0.28f;
+					Point leftEye;
+					Point rightEye;
+
+					int leftX = cvRound(face.cols * EYE_SX);
+					int topY = cvRound(face.rows * EYE_SY);
+					int widthX = cvRound(face.cols * EYE_SW);
+					int heightY = cvRound(face.rows * EYE_SH);
+					int rightX = cvRound(face.cols * (1.0 - EYE_SX - EYE_SW));  // Start of right-eye corner
+
+					Mat topLeftOfFace = face(Rect(leftX, topY, widthX, heightY));
+					Mat topRightOfFace = face(Rect(rightX, topY, widthX, heightY));
+					Rect leftEyeRect, rightEyeRect;
+
+					detectLargestObject(topLeftOfFace, eyes_cascade_left, leftEyeRect, topLeftOfFace.cols);
+					detectLargestObject(topRightOfFace, eyes_cascade_right, rightEyeRect, topRightOfFace.cols);
+
+					if (leftEyeRect.width > 0) {   // Check if the eye was detected.
+						leftEyeRect.x += leftX;    // Adjust the left-eye rectangle because the face border was removed.
+						leftEyeRect.y += topY;
+						leftEye = Point(leftEyeRect.x + leftEyeRect.width / 2, leftEyeRect.y + leftEyeRect.height / 2);
+					}
+					else {
+						leftEye = Point(-1, -1);    // Return an invalid point
+					}
+
+
+					if (rightEyeRect.width > 0) { // Check if the eye was detected.
+						rightEyeRect.x += rightX; // Adjust the right-eye rectangle, since it starts on the right side of the image.
+						rightEyeRect.y += topY;  // Adjust the right-eye rectangle because the face border was removed.
+						rightEye = Point(rightEyeRect.x + rightEyeRect.width / 2, rightEyeRect.y + rightEyeRect.height / 2);
+					}
+					else {
+						rightEye = Point(-1, -1);    // Return an invalid point
+					}
+
+					cout << leftEye;
+
+					//-- In each face, detect eyes
+
 					cv::resize(face, face_resized, Size(im_width, im_height), 1.0, 1.0, INTER_CUBIC);
 					// Now perform the prediction, see how easy that is:
+
+					//only gives prediction if there is an eye detection too!
+					
 					int prediction = model->predict(face_resized);
 
-
 					//here we will check to see if there is no good prediction than the face is unknown
-
-					if (j < 20 && prediction == -1){
+					//also check to make sure we detected an eye!
+					if (j < 20 && prediction == -1 && leftEye != Point(-1, -1) && rightEye != Point(-1, -1)){
 							//take 10 photos? what if there is an error with training on the person speaking?
 							stringstream ss;
 							ss << j+1;
@@ -148,7 +287,7 @@ int main(int argc, const char *argv[]) {
 							names.push_back(subject_name);
 
 							if (j == 19){
-								cout << "retraining";
+								cout << "retraining \n";
 								model->train(images, labels);
 								//we must update the map as well
 								for (int i = 0; i < labels.size(); i++){
@@ -173,7 +312,7 @@ int main(int argc, const char *argv[]) {
 					if (prediction == -1){
 						it = "unknown";
 					}
-					cout << it;
+					cout << it <<"\n";
 					string box_text = "Prediction = " + it;
 					//string box_text = format("Prediction = ", boxname);
 					// Calculate the position for annotated text (make sure we don't
@@ -181,8 +320,9 @@ int main(int argc, const char *argv[]) {
 					int pos_x = std::max(face_i.tl().x - 10, 0);
 					int pos_y = std::max(face_i.tl().y - 10, 0);
 					// And now put it into the image:
+
 					putText(original, box_text, Point(pos_x, pos_y), FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 255, 0), 2.0);
-					
+
 
 				}
 

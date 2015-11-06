@@ -20,3 +20,7 @@ http://docs.opencv.org/modules/contrib/doc/facerec/tutorial/facerec_video_recogn
 C:\Python27> python create_csv.py c:/users/michael/documents/att > csvfile.csv
 
 
+//next steps are to increase detection performance for non-frontal faces
+
+
+//add a condition to only output detected faces after retraining happens
